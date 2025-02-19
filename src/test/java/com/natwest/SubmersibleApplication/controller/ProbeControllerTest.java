@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class ProbeControllerTest {
@@ -78,12 +79,8 @@ public class ProbeControllerTest {
         String commands = "FXZ"; // Invalid command 'X' and 'Z'
         doThrow(new IllegalArgumentException("Invalid command: X")).when(probeService).executeCommands(commands);
 
-        // Act
-        ResponseEntity<String> response = probeController.executeCommands(commands);
-
         // Assert
-        assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Invalid command: X", response.getBody());
+        assertThrows(IllegalArgumentException.class,() -> probeController.executeCommands(commands));
         verify(probeService, times(1)).executeCommands(commands);
     }
 
@@ -92,12 +89,8 @@ public class ProbeControllerTest {
         // Arrange
         when(probeService.getProbeSummary()).thenThrow(new IllegalStateException("Probe has not been initialized."));
 
-        // Act
-        ResponseEntity<String> response = probeController.getProbeSummary();
-
         // Assert
-        assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Probe has not been initialized.", response.getBody());
+        assertThrows(IllegalStateException.class,() -> probeController.getProbeSummary());
         verify(probeService, times(1)).getProbeSummary();
     }
 }

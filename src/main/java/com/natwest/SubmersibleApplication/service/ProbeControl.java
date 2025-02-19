@@ -4,12 +4,11 @@ import com.natwest.SubmersibleApplication.exception.ProbeException;
 import com.natwest.SubmersibleApplication.model.Direction;
 import com.natwest.SubmersibleApplication.model.Position;
 import lombok.Getter;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProbeControlService {
+public class ProbeControl {
     @Getter
     private Position position;
     @Getter
@@ -20,7 +19,7 @@ public class ProbeControlService {
     @Getter
     private List<Position> visitedPositions;
 
-    public ProbeControlService(int x, int y, Direction direction, int gridWidth, int gridHeight) {
+    public ProbeControl(int x, int y, Direction direction, int gridWidth, int gridHeight) {
         this.position = new Position(x, y);
         this.direction = direction;
         this.gridWidth = gridWidth;

@@ -12,18 +12,32 @@ public class ProbeServiceTest {
     @BeforeEach
     void setUp() {
         probeService = new ProbeService();
-        probeService.initializeProbe(0, 0, Direction.NORTH, 10, 10);
+        probeService.initializeProbe(2, 3, Direction.NORTH, 10, 10);
     }
 
     @Test
     void testMoveForward() {
         probeService.executeCommands("F");
-        assertTrue(probeService.getProbeSummary().contains("(0, 1)"));
+        assertTrue(probeService.getProbeSummary().contains("Position{x=2, y=4}"));
+    }
+
+    @Test
+    void testMoveBackward() {
+        probeService.executeCommands("B");
+        assertTrue(probeService.getProbeSummary().contains("Position{x=2, y=2}"));
     }
 
     @Test
     void testTurnRight() {
         probeService.executeCommands("R");
         assertTrue(probeService.getProbeSummary().contains("EAST"));
+    }
+
+
+
+    @Test
+    void testTurnLeft() {
+        probeService.executeCommands("L");
+        assertTrue(probeService.getProbeSummary().contains("WEST"));
     }
 }

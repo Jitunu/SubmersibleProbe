@@ -5,28 +5,31 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ProbeService {
-    private ProbeControlService probeControlService;
+    private ProbeControl probeControl;
 
     public void initializeProbe(int x, int y, Direction direction, int gridWidth, int gridHeight) {
-        probeControlService = new ProbeControlService(x, y, direction, gridWidth, gridHeight);
+        probeControl = new ProbeControl(x, y, direction, gridWidth, gridHeight);
+    }
+    public ProbeService() {
+        probeControl = new ProbeControl(0, 0, Direction.NORTH, 10, 10);
     }
 
     public void executeCommands(String commands) {
         for (char command : commands.toCharArray()) {
             switch (command) {
-                case 'F' -> probeControlService.moveForward();
-                case 'B' -> probeControlService.moveBackward();
-                case 'L' -> probeControlService.turnLeft();
-                case 'R' -> probeControlService.turnRight();
+                case 'F' -> probeControl.moveForward();
+                case 'B' -> probeControl.moveBackward();
+                case 'L' -> probeControl.turnLeft();
+                case 'R' -> probeControl.turnRight();
                 default -> throw new IllegalArgumentException("Invalid command: " + command);
             }
         }
     }
 
     public String getProbeSummary() {
-        if (probeControlService == null) {
+        if (probeControl == null) {
             throw new IllegalStateException("Probe has not been initialized.");
         }
-        return probeControlService.getSummary();
+        return probeControl.getSummary();
     }
 }

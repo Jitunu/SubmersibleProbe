@@ -1,5 +1,7 @@
 package com.natwest.SubmersibleApplication.model;
 
+import java.util.Objects;
+
 public class Position {
     private int x;
     private int y;
@@ -31,6 +33,17 @@ public class Position {
                 "x=" + x +
                 ", y=" + y +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Position position)) return false;
+        return x == position.x && y == position.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 }
 
