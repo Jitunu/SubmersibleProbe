@@ -92,4 +92,7 @@ public class ProbeControlService {
         return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
     }
 
+    public String getSummary() {
+        return "Probe is at " + position + " facing " + direction + ". Visited positions: " + visitedPositions;
+    }
 }
