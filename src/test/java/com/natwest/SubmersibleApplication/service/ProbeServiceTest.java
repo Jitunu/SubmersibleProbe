@@ -4,6 +4,8 @@ import com.natwest.SubmersibleApplication.model.Direction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ProbeServiceTest {
@@ -12,7 +14,7 @@ public class ProbeServiceTest {
     @BeforeEach
     void setUp() {
         probeService = new ProbeService();
-        probeService.initializeProbe(2, 3, Direction.NORTH, 10, 10);
+        probeService.initializeProbe(2, 3, Direction.NORTH, 10, 10, new ArrayList<>());
     }
 
     @Test
@@ -32,8 +34,6 @@ public class ProbeServiceTest {
         probeService.executeCommands("R");
         assertTrue(probeService.getProbeSummary().contains("EAST"));
     }
-
-
 
     @Test
     void testTurnLeft() {

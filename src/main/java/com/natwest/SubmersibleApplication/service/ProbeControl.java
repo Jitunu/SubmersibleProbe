@@ -4,11 +4,16 @@ import com.natwest.SubmersibleApplication.exception.ProbeException;
 import com.natwest.SubmersibleApplication.model.Direction;
 import com.natwest.SubmersibleApplication.model.Position;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProbeControl {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProbeControl.class);
+
     @Getter
     private Position position;
     @Getter
@@ -18,14 +23,16 @@ public class ProbeControl {
 
     @Getter
     private List<Position> visitedPositions;
+    private List<Position> obstacles;
 
-    public ProbeControl(int x, int y, Direction direction, int gridWidth, int gridHeight) {
+    public ProbeControl(int x, int y, Direction direction, int gridWidth, int gridHeight, List<Position> obstacles) {
         this.position = new Position(x, y);
         this.direction = direction;
         this.gridWidth = gridWidth;
         this.gridHeight = gridHeight;
         this.visitedPositions = new ArrayList<>();
         this.visitedPositions.add(new Position(x, y));
+        this.obstacles = obstacles;
     }
 
     public void moveForward() {
@@ -39,10 +46,11 @@ public class ProbeControl {
             case WEST -> newX--;
         }
 
-        if (isValidPosition(newX, newY)) {
+        if (isValidPosition(newX, newY)  && !isObstacle(newX, newY)) {
             position.setX(newX);
             position.setY(newY);
             visitedPositions.add(new Position(newX, newY));
+            logger.info("Moved Forward!!!");
         } else {
             throw new ProbeException("Probe cannot move outside the grid.");
         }
@@ -59,10 +67,11 @@ public class ProbeControl {
             case WEST -> newX++;
         }
 
-        if (isValidPosition(newX, newY)) {
+        if (isValidPosition(newX, newY)  && !isObstacle(newX, newY)) {
             position.setX(newX);
             position.setY(newY);
             visitedPositions.add(new Position(newX, newY));
+            logger.info("Moved Backward!!!");
         } else {
             throw new ProbeException("Probe cannot move outside the grid.");
         }
@@ -75,6 +84,7 @@ public class ProbeControl {
             case SOUTH -> Direction.EAST;
             case WEST -> Direction.SOUTH;
         };
+        logger.info("Turned Left");
     }
 
     public void turnRight() {
@@ -84,10 +94,23 @@ public class ProbeControl {
             case SOUTH -> Direction.WEST;
             case WEST -> Direction.NORTH;
         };
+        logger.info("Turned Right");
     }
 
     private boolean isValidPosition(int x, int y) {
-        return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
+        if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+           return true;
+        } else {
+            throw new ProbeException("Probe cannot move outside the grid.");
+        }
+    }
+
+    private boolean isObstacle(int x, int y) {
+        if(obstacles.contains(new Position(x, y))) {
+            throw new ProbeException("Probe cannot move as it found Obstacle.");
+        } else {
+            return false;
+        }
     }
 
     public String getSummary() {

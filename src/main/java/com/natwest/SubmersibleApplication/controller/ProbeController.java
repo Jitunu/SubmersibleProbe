@@ -1,14 +1,16 @@
 package com.natwest.SubmersibleApplication.controller;
 
 import com.natwest.SubmersibleApplication.model.Direction;
+import com.natwest.SubmersibleApplication.model.Position;
+import com.natwest.SubmersibleApplication.model.ProbeRequest;
 import com.natwest.SubmersibleApplication.service.ProbeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 public class ProbeController {
@@ -16,9 +18,9 @@ public class ProbeController {
     private ProbeService probeService;
 
     @PostMapping("/initialize")
-    public ResponseEntity<String> initializeProbe(@RequestParam int x, @RequestParam int y, @RequestParam Direction direction,
-                                                 @RequestParam int gridWidth, @RequestParam int gridHeight) {
-        probeService.initializeProbe(x, y, direction, gridWidth, gridHeight);
+    public ResponseEntity<String> initializeProbe(@RequestBody ProbeRequest probeRequest) {
+        probeService.initializeProbe(probeRequest.getX(), probeRequest.getY(), probeRequest.getDirection(),
+                probeRequest.getGridWidth(), probeRequest.getGridHeight(), probeRequest.getObstacles());
         return new ResponseEntity<>("Probe initialized successfully.", HttpStatus.OK);
     }
 
@@ -32,4 +34,5 @@ public class ProbeController {
     public ResponseEntity<String> getProbeSummary() {
         return new ResponseEntity<>(probeService.getProbeSummary(), HttpStatus.OK);
     }
+
 }

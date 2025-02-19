@@ -3,15 +3,13 @@ package com.natwest.SubmersibleApplication.service;
 import com.natwest.SubmersibleApplication.exception.ProbeException;
 import com.natwest.SubmersibleApplication.model.Direction;
 import com.natwest.SubmersibleApplication.model.Position;
-import lombok.Data;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-@Data
 
 public class ProbeControlTest {
 
@@ -19,7 +17,7 @@ public class ProbeControlTest {
 
     @BeforeEach
     void setUp() {
-        probeControl = new ProbeControl(0,0, Direction.NORTH, 10, 10);
+        probeControl = new ProbeControl(0,0, Direction.NORTH, 10, 10, new ArrayList<>());
     }
 
     @Test
@@ -38,7 +36,7 @@ public class ProbeControlTest {
 
     @Test
     void testMoveBackward() {
-        probeControl = new ProbeControl(2,9, Direction.NORTH, 10, 10);
+        probeControl = new ProbeControl(2,9, Direction.NORTH, 10, 10, new ArrayList<>());
         probeControl.moveBackward();
         assertEquals(2, probeControl.getPosition().getX());
         assertEquals(8, probeControl.getPosition().getY());
@@ -58,13 +56,12 @@ public class ProbeControlTest {
 
     @Test
     void testMoveForwardOutOfGrid() {
-        probeControl = new ProbeControl(0,9, Direction.NORTH, 10, 10);
+        probeControl = new ProbeControl(0,9, Direction.NORTH, 10, 10, new ArrayList<>());
         assertThrows(ProbeException.class, () -> probeControl.moveForward());
     }
 
     @Test
     void testMoveBackwardOutOfGrid() {
-        probeControl = new ProbeControl(0,0, Direction.NORTH, 10, 10);
         assertThrows(ProbeException.class, () -> probeControl.moveBackward());
     }
 
@@ -84,5 +81,43 @@ public class ProbeControlTest {
         assertEquals(new Position(1, 1), visitedPositions.get(2));
         assertEquals(new Position(1, 0), visitedPositions.get(3));
 
+    }
+
+    @Test
+    void testGetSummary() {
+        probeControl.moveForward();
+        probeControl.turnRight();
+        probeControl.moveForward();
+
+        String summary = probeControl.getSummary();
+        assertTrue(summary.contains("Probe is at Position{x=1, y=1} facing EAST"));
+        assertTrue(summary.contains("Visited positions: [Position{x=0, y=0}, Position{x=0, y=1}, Position{x=1, y=1}]"));
+    }
+
+    @Test
+    void testMoveForwardWithObstacle() {
+        // Add an obstacle at (0, 1)
+        List<Position> obstacles = new ArrayList<>();
+        obstacles.add(new Position(0, 1));
+        probeControl = new ProbeControl(0, 0, Direction.NORTH, 10, 10, obstacles);
+
+        // Try to move forward into the obstacle
+        assertThrows(ProbeException.class, () -> probeControl.moveForward());
+    }
+
+    @Test
+    void testMoveForwardWithMultipleObstacles() {
+        // Add obstacles at (0, 1) and (1, 0)
+        List<Position> obstacles = new ArrayList<>();
+        obstacles.add(new Position(0, 1));
+        obstacles.add(new Position(1, 0));
+        probeControl = new ProbeControl(0, 0, Direction.NORTH, 10, 10, obstacles);
+
+        // Try to move forward into the first obstacle
+        assertThrows(ProbeException.class, () -> probeControl.moveForward());
+
+        // Turn right and try to move forward into the second obstacle
+        probeControl.turnRight();
+        assertThrows(ProbeException.class, () -> probeControl.moveForward());
     }
 }
