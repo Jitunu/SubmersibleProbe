@@ -9,10 +9,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
 public class ProbeControlService {
     @Getter
-    private final Position position;
+    private Position position;
     @Getter
     private Direction direction;
     private final int gridWidth;
