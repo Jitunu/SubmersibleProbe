@@ -2,10 +2,20 @@ package com.natwest.SubmersibleApplication.model;
 
 import java.util.Objects;
 
+/**
+ * Represents a position on the grid with x and y coordinates.
+ * This class is used to track the probe's location and obstacles on the grid.
+ */
 public class Position {
     private int x;
     private int y;
 
+    /**
+     * Constructs a new Position with the specified coordinates.
+     *
+     * @param x The x-coordinate of the position.
+     * @param y The y-coordinate of the position.
+     */
     public Position(int x, int y) {
         this.x = x;
         this.y = y;
