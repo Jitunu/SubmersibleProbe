@@ -1,52 +1,79 @@
 package com.natwest.SubmersibleApplication.service;
 
+import com.natwest.SubmersibleApplication.dto.ProbeRequest;
+import com.natwest.SubmersibleApplication.exception.InvalidCommandException;
 import com.natwest.SubmersibleApplication.exception.ProbeException;
+import com.natwest.SubmersibleApplication.model.Command;
 import com.natwest.SubmersibleApplication.model.Direction;
+import com.natwest.SubmersibleApplication.model.Grid;
 import com.natwest.SubmersibleApplication.model.Position;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Class responsible for controlling the probe's movements and tracking its state.
- * This class handles the probe's position, direction, and obstacle detection.
+ * Component responsible for controlling the probe's movement and tracking its state.
+ * It manages probe positioning, direction, and execution of movement commands.
  */
+@Component
 public class ProbeControl {
 
     private static final Logger logger = LoggerFactory.getLogger(ProbeControl.class);
 
-    @Getter
     private Position position;
-    @Getter
     private Direction direction;
-    private final int gridWidth;
-    private final int gridHeight;
+    private Grid grid;
+    private Set<Position> obstacles;
 
-    @Getter
-    private List<Position> visitedPositions;
-    private List<Position> obstacles;
+    public Position getPosition() {
+        return new Position(position.getX(), position.getY()); // Defensive Copy
+    }
+
+    public Direction getDirection() {
+        return direction;
+    }
 
     /**
-     * Constructs a new ProbeControl instance with the specified parameters.
+     * Initializes the probe's position, direction, and grid size.
      *
-     * @param x          The initial X-coordinate of the probe.
-     * @param y          The initial Y-coordinate of the probe.
-     * @param direction  The initial direction the probe is facing.
-     * @param gridWidth  The width of the grid.
-     * @param gridHeight The height of the grid.
-     * @param obstacles  A list of positions representing obstacles on the grid.
+     * @param probeRequest The request containing probe's initial state and grid dimensions.
      */
-    public ProbeControl(int x, int y, Direction direction, int gridWidth, int gridHeight, List<Position> obstacles) {
-        this.position = new Position(x, y);
-        this.direction = direction;
-        this.gridWidth = gridWidth;
-        this.gridHeight = gridHeight;
-        this.visitedPositions = new ArrayList<>();
-        this.visitedPositions.add(new Position(x, y));
-        this.obstacles = obstacles;
+    public void initialize(ProbeRequest probeRequest) {
+        this.position = new Position(probeRequest.getX(), probeRequest.getY());
+        this.direction = probeRequest.getDirection();
+        this.grid = new Grid(probeRequest.getGridWidth(), probeRequest.getGridHeight());
+        this.obstacles = probeRequest.getObstacles();
+    }
+
+    /**
+     * Processes a sequence of movement commands for the probe.
+     *
+     * @param commands A string representing movement commands (F - Forward, B - Backward, L - Left, R - Right).
+     */
+    public void processCommands(String commands) {
+        for (char command : commands.toCharArray()) {
+            move(Command.valueOf(String.valueOf(command)));
+        }
+    }
+
+    /**
+     * Moves the probe based on the given command.
+     *
+     * @param command The movement command.
+     */
+    public void move(Command command) {
+        switch (command) {
+            case F -> moveForward();
+            case B -> moveBackward();
+            case L -> turnLeft();
+            case R -> turnRight();
+            default -> throw new InvalidCommandException("Invalid command");
+        }
     }
 
     /**
@@ -65,14 +92,8 @@ public class ProbeControl {
             case WEST -> newX--;
         }
 
-        if (isValidPosition(newX, newY)  && !isObstacle(newX, newY)) {
-            position.setX(newX);
-            position.setY(newY);
-            visitedPositions.add(new Position(newX, newY));
-            logger.info("Moved Forward!!!");
-        } else {
-            throw new ProbeException("Probe cannot move outside the grid.");
-        }
+        validateAndMove(newX, newY);
+        logger.info("Moved Forward!!!");
     }
 
     /**
@@ -91,14 +112,26 @@ public class ProbeControl {
             case WEST -> newX++;
         }
 
-        if (isValidPosition(newX, newY)  && !isObstacle(newX, newY)) {
-            position.setX(newX);
-            position.setY(newY);
-            visitedPositions.add(new Position(newX, newY));
-            logger.info("Moved Backward!!!");
-        } else {
-            throw new ProbeException("Probe cannot move outside the grid.");
+        validateAndMove(newX, newY);
+        logger.info("Moved Backward!!!");
+    }
+
+
+    /**
+     * Validate probe movement is within the grid and obstacles and then move.
+     * @param newX The X-coordinate to check.
+     * @param newY The Y-coordinate to check.
+     * @throws ProbeException If the probe attempts to move outside the grid or into an obstacle.
+     */
+    private void validateAndMove(int newX, int newY) {
+        if (!grid.isWithinBounds(newX, newY)) {
+            throw new ProbeException("Movement out of bounds");
         }
+        if (obstacles.contains(new Position(newX, newY))) {
+            throw new ProbeException("Obstacle at (" + newX + ", " + newY + ")");
+        }
+        position.setX(newX);
+        position.setY(newY);
     }
 
     /**
@@ -125,46 +158,5 @@ public class ProbeControl {
             case WEST -> Direction.NORTH;
         };
         logger.info("Turned Right");
-    }
-
-    /**
-     * Checks if a position is valid within the grid boundaries.
-     *
-     * @param x The X-coordinate to check.
-     * @param y The Y-coordinate to check.
-     * @return True if the position is valid, otherwise throws a ProbeException.
-     * @throws ProbeException If the position is outside the grid boundaries.
-     */
-    private boolean isValidPosition(int x, int y) {
-        if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
-           return true;
-        } else {
-            throw new ProbeException("Probe cannot move outside the grid.");
-        }
-    }
-
-    /**
-     * Checks if a position contains an obstacle.
-     *
-     * @param x The X-coordinate to check.
-     * @param y The Y-coordinate to check.
-     * @return True if the position contains an obstacle, otherwise throws a ProbeException.
-     * @throws ProbeException If the position contains an obstacle.
-     */
-    private boolean isObstacle(int x, int y) {
-        if(obstacles.contains(new Position(x, y))) {
-            throw new ProbeException("Probe cannot move as it found Obstacle.");
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Retrieves a summary of the probe's current state.
-     *
-     * @return A string containing the probe's position, direction, and visited positions.
-     */
-    public String getSummary() {
-        return "Probe is at " + position + " facing " + direction + ". Visited positions: " + visitedPositions;
     }
 }

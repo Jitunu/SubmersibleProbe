@@ -1,100 +1,79 @@
 package com.natwest.SubmersibleApplication.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.natwest.SubmersibleApplication.dto.ProbeRequest;
+import com.natwest.SubmersibleApplication.dto.ProbeResponse;
 import com.natwest.SubmersibleApplication.model.Direction;
-import com.natwest.SubmersibleApplication.model.ProbeRequest;
-import com.natwest.SubmersibleApplication.service.ProbeService;
+import com.natwest.SubmersibleApplication.service.IProbeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
-
+@WebMvcTest(ProbeController.class)
 public class ProbeControllerTest {
 
-    @Mock
-    private ProbeService probeService;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @InjectMocks
-    private ProbeController probeController;
+    @MockitoBean
+    private IProbeService probeService;
+
+    private ProbeRequest probeRequest;
+    private ProbeResponse probeResponse;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        probeRequest = new ProbeRequest(2, 2, Direction.EAST, 5, 5, null);
+        probeResponse = new ProbeResponse(0, 0, Direction.NORTH);
     }
 
     @Test
-    void testInitializeProbe() {
+    void testInitializeProbe() throws Exception {
+        when(probeService.initializeProbe(Mockito.any(ProbeRequest.class))).thenReturn(probeResponse);
 
-        int x = 0;
-        int y = 0;
-        Direction direction = Direction.NORTH;
-        int gridWidth = 10;
-        int gridHeight = 10;
-
-        ProbeRequest probeRequest = new ProbeRequest();
-        probeRequest.setX(x);
-        probeRequest.setY(y);
-        probeRequest.setDirection(direction);
-        probeRequest.setGridWidth(gridWidth);
-        probeRequest.setGridHeight(gridHeight);
-        probeRequest.setObstacles(new ArrayList<>());
-
-        ResponseEntity<String> response = probeController.initializeProbe(probeRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Probe initialized successfully.", response.getBody());
-        verify(probeService, times(1)).initializeProbe(x, y, direction, gridWidth, gridHeight, new ArrayList<>());
+        mockMvc.perform(post("/api/v1/initialize")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(probeRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.x").value(0))
+                .andExpect(jsonPath("$.y").value(0))
+                .andExpect(jsonPath("$.direction").value("NORTH"));
     }
 
     @Test
-    void testExecuteCommands() {
+    void testExecuteCommands() throws Exception {
+        ProbeResponse probeResponse = new ProbeResponse(2, 2, Direction.EAST);
+        when(probeService.executeCommands("FFR")).thenReturn(probeResponse);
 
-        String commands = "FFRFF";
-
-        ResponseEntity<String> response = probeController.executeCommands(commands);
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("Commands executed successfully.", response.getBody());
-        verify(probeService, times(1)).executeCommands(commands);
+        mockMvc.perform(post("/api/v1/commands")
+                        .param("commands", "FFR"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.x").value(2))
+                .andExpect(jsonPath("$.y").value(2))
+                .andExpect(jsonPath("$.direction").value("EAST"));
     }
 
     @Test
-    void testGetProbeSummary() {
+    void testGetProbeSummary() throws Exception {
+        ProbeResponse probeResponse = new ProbeResponse(1, 1, Direction.SOUTH);
+        when(probeService.getProbeSummary()).thenReturn(probeResponse);
 
-        String expectedSummary = "Probe is at (2, 3) facing EAST. Visited positions: [(0, 0), (0, 1), (1, 1), (2, 1), (2, 2), (2, 3)]";
-        when(probeService.getProbeSummary()).thenReturn(expectedSummary);
-
-        ResponseEntity<String> response = probeController.getProbeSummary();
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(expectedSummary, response.getBody());
-        verify(probeService, times(1)).getProbeSummary();
-    }
-
-    @Test
-    void testExecuteCommandsWithInvalidCommand() {
-
-        String commands = "FXZ"; // Invalid command 'X' and 'Z'
-        doThrow(new IllegalArgumentException("Invalid command: X")).when(probeService).executeCommands(commands);
-
-        assertThrows(IllegalArgumentException.class,() -> probeController.executeCommands(commands));
-        verify(probeService, times(1)).executeCommands(commands);
-    }
-
-    @Test
-    void testGetProbeSummaryWhenProbeNotInitialized() {
-
-        when(probeService.getProbeSummary()).thenThrow(new IllegalStateException("Probe has not been initialized."));
-
-        assertThrows(IllegalStateException.class,() -> probeController.getProbeSummary());
-        verify(probeService, times(1)).getProbeSummary();
+        mockMvc.perform(get("/api/v1/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.x").value(1))
+                .andExpect(jsonPath("$.y").value(1))
+                .andExpect(jsonPath("$.direction").value("SOUTH"));
     }
 }

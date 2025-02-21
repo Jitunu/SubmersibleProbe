@@ -1,8 +1,9 @@
 package com.natwest.SubmersibleApplication.controller;
 
-import com.natwest.SubmersibleApplication.model.ProbeRequest;
-import com.natwest.SubmersibleApplication.service.ProbeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.natwest.SubmersibleApplication.dto.ProbeResponse;
+import com.natwest.SubmersibleApplication.model.Grid;
+import com.natwest.SubmersibleApplication.dto.ProbeRequest;
+import com.natwest.SubmersibleApplication.service.IProbeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,42 +13,42 @@ import org.springframework.web.bind.annotation.*;
  * This class exposes endpoints to initialize the probe, execute commands, and retrieve the probe's summary.
  */
 @RestController
+@RequestMapping("/api/v1")
 public class ProbeController {
-    @Autowired
-    private ProbeService probeService;
 
+    private final IProbeService probeService;
+
+    public ProbeController(IProbeService probeService) { this.probeService = probeService; }
     /**
      * Initializes the probe with the given parameters.
      *
-     * @param probeRequest The request body containing the probe's initial position, direction, grid dimensions, and obstacles.
-     * @return A ResponseEntity with a success message and HTTP status OK.
+     * @param request The request containing probe's initial state and grid configuration.
+     * @return A ResponseEntity containing the probe's initial status.
      */
     @PostMapping("/initialize")
-    public ResponseEntity<String> initializeProbe(@RequestBody ProbeRequest probeRequest) {
-        probeService.initializeProbe(probeRequest.getX(), probeRequest.getY(), probeRequest.getDirection(),
-                probeRequest.getGridWidth(), probeRequest.getGridHeight(), probeRequest.getObstacles());
-        return new ResponseEntity<>("Probe initialized successfully.", HttpStatus.OK);
+    public ResponseEntity<ProbeResponse> initializeProbe(@RequestBody ProbeRequest request) {
+        ProbeResponse response = probeService.initializeProbe(request);
+        return ResponseEntity.status(201).body(response);
     }
 
     /**
      * Executes a sequence of movement commands for the probe.
      * @param commands A string representing commands (F - Forward, B - Backward, L - Left, R - Right).
-     * @return A ResponseEntity with a success message and HTTP status OK.
+     * @return A ResponseEntity containing the probe's updated status.
      */
     @PostMapping("/commands")
-    public ResponseEntity<String> executeCommands(@RequestParam String commands) {
-        probeService.executeCommands(commands);
-        return new ResponseEntity<>("Commands executed successfully.", HttpStatus.OK);
+    public ResponseEntity<ProbeResponse> executeCommands(@RequestParam String commands) {
+        return ResponseEntity.ok(probeService.executeCommands(commands));
     }
 
     /**
      * Retrieves the current summary of the probe's status.
      *
-     * @return A ResponseEntity containing the probe's summary (position, direction, and visited positions) and HTTP status OK.
+     * @return A ResponseEntity containing the probe's current position and direction.
      */
     @GetMapping("/summary")
-    public ResponseEntity<String> getProbeSummary() {
-        return new ResponseEntity<>(probeService.getProbeSummary(), HttpStatus.OK);
+    public ResponseEntity<ProbeResponse> getProbeSummary() {
+        return ResponseEntity.ok(probeService.getProbeSummary());
     }
 
 }

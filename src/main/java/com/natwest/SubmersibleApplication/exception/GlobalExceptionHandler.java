@@ -27,6 +27,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles custom ProbeNotInitializedException and returns an internal server error response.
+     *
+     * @param ex the ProbeNotInitializedException instance
+     * @return ResponseEntity containing an error message with HTTP status 500 (Internal Server Error)
+     */
+    @ExceptionHandler(ProbeNotInitializedException.class)
+    public ResponseEntity<ErrorResponse> handleProbeNotInitializedException(ProbeNotInitializedException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Handles custom InvalidCommandException and returns an internal server error response.
+     *
+     * @param ex the InvalidCommandException instance
+     * @return ResponseEntity containing an error message with HTTP status 400 (Bad Request)
+     */
+    @ExceptionHandler(InvalidCommandException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCommandException(InvalidCommandException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Handles IllegalArgumentException, typically thrown for invalid input parameters,
      * and returns a bad request response.
      *
